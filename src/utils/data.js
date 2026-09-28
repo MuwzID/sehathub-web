@@ -13,7 +13,7 @@ export const INITIAL_FASKES = [
     distance: '1.2 km',
     hours: '08:00 - 14:00 WIB',
     queueStatus: 'Ramai (24 antrean)',
-    image: 'https://images.unsplash.com/photo-1586773860418-d37222d8fce3?auto=format&fit=crop&w=600&q=80',
+    image: 'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEiYYr2GGKSMYAcjCIuPFT3ZSyfnKAB5j_PZh6-WiuEYwpKMCD4jhNIdKCuKnlIh_DACZ4MxKTIUD8onppkUylOurD7pblYyTUIHhEslpJZS__C6mdJDWnHdTudr-OP0svFakqVGiVLDpkNH4hgU1JUzZIBxNcHbJ-2lP1zZG7riA5wZtM6IV7xZFt8K/s1600/20221121_1308595790.jpg',
     services: ['Poli Umum', 'Poli Gigi', 'KIA & KB', 'Farmasi']
   },
   {
@@ -24,7 +24,7 @@ export const INITIAL_FASKES = [
     distance: '3.5 km',
     hours: '24 Jam · Pendaftaran 07:00 - 11:00 WIB',
     queueStatus: 'Padat (45 antrean)',
-    image: 'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&w=600&q=80',
+    image: 'https://rsmargono.go.id/assets/public/images/building/building_1.jpg',
     services: ['Poli Umum', 'Poli Anak', 'Farmasi']
   },
   {
