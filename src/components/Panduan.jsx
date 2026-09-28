@@ -1,9 +1,9 @@
 export default function Panduan() {
   const steps = [
-    { id: 1, title: 'Pilih Faskes', desc: 'Cari dan pilih Puskesmas atau Klinik terdekat dari lokasi Anda.', icon: 'fa-hospital' },
+    { id: 1, title: 'Pilih Faskes', desc: 'Cari dan pilih Puskesmas atau Klinik terdekat dari lokasi anda.', icon: 'fa-hospital' },
     { id: 2, title: 'Ambil Antrean', desc: 'Daftar secara online dan dapatkan nomor urut antrean digital.', icon: 'fa-mobile-screen' },
     { id: 3, title: 'Pantau Real-time', desc: 'Cek sisa antrean melalui website tanpa harus menunggu di lokasi.', icon: 'fa-clock' },
-    { id: 4, title: 'Datang Berobat', desc: 'Datang ke faskes saat nomor antrean Anda sudah hampir dipanggil.', icon: 'fa-stethoscope' }
+    { id: 4, title: 'Datang Berobat', desc: 'Datang ke faskes saat nomor antrean anda sudah hampir dipanggil.', icon: 'fa-stethoscope' }
   ];
 
   return (

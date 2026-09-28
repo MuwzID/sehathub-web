@@ -25,7 +25,7 @@ export default function Hero() {
           </div>
           <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100 flex justify-between items-center">
             <div><p className="text-xs text-slate-500">Sedang Dilayani</p><p className="text-2xl font-bold text-slate-800">A-012</p></div>
-            <div className="text-right"><p className="text-xs text-orange-500 font-bold">Antrean Anda</p><p className="text-3xl font-black text-orange-600">A-015</p></div>
+            <div className="text-right"><p className="text-xs text-orange-500 font-bold"></p><p className="text-3xl font-black text-orange-600">A-015</p></div>
           </div>
         </div>
       </div>
