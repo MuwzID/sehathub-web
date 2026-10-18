@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import Navbar from './components/Navbar';
 import Hero from './components/Hero';
+import Tentang from './components/Tentang'; // <-- Import komponen Tentang
 import Footer from './components/Footer';
 import { STORAGE_KEYS, INITIAL_FASKES } from './utils/data';
 import Chatbot from './components/Chatbot';
 import CekAntrean from './components/CekAntrean';
 import Panduan from './components/Panduan';
+import PetaSebaran from './components/PetaSebaran';
 
 export default function App() {
   const [user, setUser] = useState(() => {
@@ -65,11 +67,76 @@ export default function App() {
     const tanggal = e.target.tanggal.value;
     const waktu = e.target.waktu.value; 
     
-    const formatTanggal = new Date(tanggal).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+    const randomCode = 'SH-' + Math.random().toString(36).substring(2, 6).toUpperCase();
+    const nomorUrut = 'A-' + Math.floor(Math.random() * 20 + 10);
+
+    const bookingData = {
+      kode: randomCode,
+      faskesNama: modalState.data?.name || 'Fasilitas Kesehatan',
+      nomor: nomorUrut,
+      waktu: `${tanggal} (${waktu})`
+    };
     
+    localStorage.setItem('sehathub_last_booking', JSON.stringify(bookingData));
     setModalState({ type: null });
-    showToast('Antrean Berhasil Dibuat!', `Nomor Anda untuk ${formatTanggal} sesi ${waktu} telah diterbitkan. Silakan cek menu Cek Antrean.`);
+    
+    alert(`🎉 Antrean Berhasil Dibuat!\n\nKode Booking Anda: ${randomCode}\nNomor Antrean: ${nomorUrut}\nFaskes: ${bookingData.faskesNama}\n\n(Silakan catat atau salin kode ini untuk melacaknya di menu Cek Antrean).`);
+    showToast('Antrean Berhasil!', `Kode Booking: ${randomCode}`);
   };
+
+  if (!user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 relative">
+        {toastMessage && (
+          <div className="fixed top-6 right-6 z-50 bg-white border-l-4 border-orange-500 p-4 rounded-xl shadow-2xl flex gap-3 modal-animation">
+            <i className="fa-solid fa-circle-check text-orange-500 text-xl"></i>
+            <div><h5 className="font-bold text-sm">{toastMessage.title}</h5><p className="text-xs text-slate-500">{toastMessage.desc}</p></div>
+          </div>
+        )}
+
+        <div className="bg-white rounded-3xl w-full max-w-sm shadow-xl p-6 md:p-8 relative border border-slate-100">
+          <div className="flex flex-col items-center mb-6">
+            <h1 className="text-3xl font-extrabold text-orange-500 mb-2">SehatHub</h1>
+            <h3 className="font-bold text-lg text-slate-800 flex items-center gap-2">
+              <i className={`fa-solid ${isLoginMode ? 'fa-circle-user' : 'fa-user-plus'} text-orange-500`}></i>
+              {isLoginMode ? 'Masuk Akun' : 'Daftar Akun'}
+            </h3>
+            <p className="text-xs text-slate-500 mt-1 text-center">Silakan masuk atau daftar untuk mengakses layanan antrean.</p>
+          </div>
+          
+          <form onSubmit={handleAuth} className="space-y-4">
+            {!isLoginMode && (
+              <div>
+                <label className="block text-xs font-bold text-slate-500 mb-1.5 ml-1">Nama Lengkap</label>
+                <input name="fullName" type="text" placeholder="Masukkan nama..." required className="w-full border border-slate-200 bg-slate-50 rounded-xl px-4 py-3.5 text-sm outline-none focus:bg-white focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 transition-all" />
+              </div>
+            )}
+            <div>
+              <label className="block text-xs font-bold text-slate-500 mb-1.5 ml-1">Email</label>
+              <input name="email" type="email" placeholder="contoh@sehathub.id" required className="w-full border border-slate-200 bg-slate-50 rounded-xl px-4 py-3.5 text-sm outline-none focus:bg-white focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 transition-all" />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-slate-500 mb-1.5 ml-1">Password</label>
+              <input name="password" type="password" placeholder="Masukkan password..." required className="w-full border border-slate-200 bg-slate-50 rounded-xl px-4 py-3.5 text-sm outline-none focus:bg-white focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 transition-all" />
+            </div>
+            <button type="submit" className="w-full mt-2 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white py-3.5 rounded-xl font-bold text-sm transition-all duration-300 shadow-lg shadow-orange-500/30 hover:shadow-orange-500/50 flex justify-center items-center gap-2">
+              {isLoginMode ? 'Masuk Sekarang' : 'Daftar Sekarang'}
+              <i className={`fa-solid ${isLoginMode ? 'fa-arrow-right' : 'fa-check'}`}></i>
+            </button>
+          </form>
+          
+          <div className="mt-6 text-center">
+            <p className="text-sm text-slate-500">
+              {isLoginMode ? 'Belum punya akun?' : 'Sudah punya akun?'} 
+              <button onClick={() => setIsLoginMode(!isLoginMode)} className="ml-1 font-bold text-orange-500 hover:text-orange-600 transition-colors">
+                {isLoginMode ? 'Daftar di sini' : 'Masuk di sini'}
+              </button>
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="font-sans text-slate-800 bg-slate-50 min-h-screen">
@@ -81,13 +148,12 @@ export default function App() {
         </div>
       )}
 
-      <Navbar 
-        user={user} 
-        onLogout={handleLogout} 
-        onLoginClick={() => { setModalState({ type: 'auth' }); setIsLoginMode(true); }} 
-      />
+      <Navbar user={user} onLogout={handleLogout} />
       
       <Hero />
+
+      {/* Komponen Tentang dimunculkan di sini */}
+      <Tentang />
 
       <section id="faskes" className="py-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <h2 className="text-3xl font-bold text-slate-900 mb-8">Fasilitas Kesehatan Terdekat</h2>
@@ -103,7 +169,7 @@ export default function App() {
                 <p className="text-xs text-slate-500 mb-4"><i className="fa-solid fa-location-arrow mr-1 text-slate-400"></i> {f.distance} | {f.hours}</p>
                 <div className="mt-auto grid grid-cols-2 gap-2">
                   <button onClick={() => setModalState({ type: 'map', data: f })} className="bg-slate-100 hover:bg-slate-200 text-slate-700 py-2.5 rounded-xl font-bold text-sm transition-colors"><i className="fa-solid fa-map-location-dot"></i> Peta</button>
-                  <button onClick={() => user ? setModalState({ type: 'booking', data: f }) : setModalState({ type: 'auth' })} className="bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white py-2.5 rounded-xl font-bold text-sm transition-colors shadow-md shadow-orange-500/20">
+                  <button onClick={() => setModalState({ type: 'booking', data: f })} className="bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white py-2.5 rounded-xl font-bold text-sm transition-colors shadow-md shadow-orange-500/20">
                     <i className="fa-solid fa-ticket"></i> Antrean
                   </button>
                 </div>
@@ -113,6 +179,7 @@ export default function App() {
         </div>
       </section>
 
+      <PetaSebaran />
       <CekAntrean />
       <Panduan />
       <Chatbot />
@@ -124,48 +191,6 @@ export default function App() {
             <div className="flex justify-between items-center mb-4"><h3 className="font-bold text-lg text-slate-800">Peta Lokasi</h3><button onClick={() => setModalState({ type: null })} className="text-slate-400 hover:text-slate-700 bg-slate-50 hover:bg-slate-200 rounded-full w-8 h-8 flex items-center justify-center transition-colors"><i className="fa-solid fa-xmark text-lg"></i></button></div>
             <div className="flex-1 rounded-2xl overflow-hidden bg-slate-100 relative">
               <iframe src={`https://maps.google.com/maps?q=${encodeURIComponent(modalState.data?.name + ' Purwokerto')}&t=&z=15&ie=UTF8&iwloc=&output=embed`} className="absolute inset-0 w-full h-full border-0" title="Peta Lokasi"></iframe>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {modalState.type === 'auth' && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-          <div className="bg-white rounded-3xl w-full max-w-sm shadow-2xl p-6 md:p-8 relative modal-animation border border-white/20">
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="font-bold text-xl text-slate-800 flex items-center gap-2">
-                <i className={`fa-solid ${isLoginMode ? 'fa-circle-user' : 'fa-user-plus'} text-orange-500 text-2xl`}></i>
-                {isLoginMode ? 'Masuk Akun' : 'Daftar Akun'}
-              </h3>
-              <button onClick={() => setModalState({ type: null })} className="text-slate-400 hover:text-orange-500 bg-slate-50 hover:bg-orange-50 rounded-full w-8 h-8 flex items-center justify-center transition-colors"><i className="fa-solid fa-xmark text-lg"></i></button>
-            </div>
-            <form onSubmit={handleAuth} className="space-y-4">
-              {!isLoginMode && (
-                <div>
-                  <label className="block text-xs font-bold text-slate-500 mb-1.5 ml-1">Nama Lengkap</label>
-                  <input name="fullName" type="text" placeholder="Masukkan nama..." required className="w-full border border-slate-200 bg-slate-50 rounded-xl px-4 py-3.5 text-sm outline-none focus:bg-white focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 transition-all" />
-                </div>
-              )}
-              <div>
-                <label className="block text-xs font-bold text-slate-500 mb-1.5 ml-1">Email</label>
-                <input name="email" type="email" placeholder="contoh@sehathub.id" required className="w-full border border-slate-200 bg-slate-50 rounded-xl px-4 py-3.5 text-sm outline-none focus:bg-white focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 transition-all" />
-              </div>
-              <div>
-                <label className="block text-xs font-bold text-slate-500 mb-1.5 ml-1">Password</label>
-                <input name="password" type="password" placeholder="Masukkan password..." required className="w-full border border-slate-200 bg-slate-50 rounded-xl px-4 py-3.5 text-sm outline-none focus:bg-white focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 transition-all" />
-              </div>
-              <button type="submit" className="w-full mt-2 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white py-3.5 rounded-xl font-bold text-sm transition-all duration-300 shadow-lg shadow-orange-500/30 hover:shadow-orange-500/50 hover:-translate-y-0.5 flex justify-center items-center gap-2">
-                {isLoginMode ? 'Masuk Sekarang' : 'Daftar Sekarang'}
-                <i className={`fa-solid ${isLoginMode ? 'fa-arrow-right' : 'fa-check'}`}></i>
-              </button>
-            </form>
-            <div className="mt-6 text-center">
-              <p className="text-sm text-slate-500">
-                {isLoginMode ? 'Belum punya akun?' : 'Sudah punya akun?'} 
-                <button onClick={() => setIsLoginMode(!isLoginMode)} className="ml-1 font-bold text-orange-500 hover:text-orange-600 transition-colors">
-                  {isLoginMode ? 'Daftar di sini' : 'Masuk di sini'}
-                </button>
-              </p>
             </div>
           </div>
         </div>
