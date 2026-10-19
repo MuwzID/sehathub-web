@@ -8,6 +8,8 @@ export default function CekAntrean() {
   const [nomorSekarang, setNomorSekarang] = useState(0);
   const [nomorAnda, setNomorAnda] = useState(0);
   const [faskesNama, setFaskesNama] = useState('');
+  const [statusVerifikasi, setStatusVerifikasi] = useState('Menunggu');
+  const [jadwalWaktu, setJadwalWaktu] = useState('');
 
   // --- FUNGSI SUARA INTERAKTIF ---
   const playSound = (isSuccess) => {
@@ -58,25 +60,38 @@ export default function CekAntrean() {
     setStatus('loading');
     setErrorMsg('');
 
-    // Simulasi loading pencarian data 1.5 detik
     setTimeout(() => {
       try {
-        const savedData = JSON.parse(localStorage.getItem('sehathub_last_booking'));
+        const allBookings = JSON.parse(localStorage.getItem('sehathub_all_bookings')) || [];
+        const lastBooking = JSON.parse(localStorage.getItem('sehathub_last_booking'));
 
-        if (savedData && savedData.kode.toUpperCase() === kode.trim().toUpperCase()) {
-          // Ambil angka asli dari nomor antrean (misal "A-24" jadi 24)
-          const userNum = parseInt(savedData.nomor.replace(/\D/g, '')) || 15;
-          
+        // Cari di daftar semua antrean admin terlebih dahulu, lalu fallback ke last_booking
+        let foundBooking = allBookings.find(b => b.kode.toUpperCase() === kode.trim().toUpperCase());
+        if (!foundBooking && lastBooking && lastBooking.kode.toUpperCase() === kode.trim().toUpperCase()) {
+          foundBooking = lastBooking;
+        }
+
+        if (foundBooking) {
+          const userNum = parseInt(foundBooking.nomor.replace(/\D/g, '')) || 15;
+          const currentVerif = foundBooking.status || 'Menunggu';
+
           setNomorAnda(userNum);
-          // Set simulasi seolah-olah antrean kurang 3 orang lagi
-          setNomorSekarang(userNum > 3 ? userNum - 3 : 1); 
-          setFaskesNama(savedData.faskesNama);
+          setStatusVerifikasi(currentVerif);
+          setJadwalWaktu(foundBooking.waktu || '-');
+          setFaskesNama(foundBooking.faskesNama);
 
-          playSound(true); // Suara sukses!
+          // Jika sudah diselesaikan oleh Admin, langsung set antrean selesai
+          if (currentVerif === 'Selesai') {
+            setNomorSekarang(userNum);
+          } else {
+            setNomorSekarang(userNum > 3 ? userNum - 3 : 1);
+          }
+
+          playSound(true);
           setStatus('tracking');
         } else {
-          setErrorMsg('Kode Booking tidak valid atau antrean telah selesai.');
-          playSound(false); // Suara gagal!
+          setErrorMsg('Kode Booking tidak ditemukan. Pastikan kode sesuai dengan E-Ticket Anda.');
+          playSound(false);
           setStatus('error');
         }
       } catch (err) {
@@ -84,30 +99,38 @@ export default function CekAntrean() {
         playSound(false);
         setStatus('error');
       }
-    }, 1500);
+    }, 1000);
+  };
+
+  const isiKodeTerakhir = () => {
+    try {
+      const saved = JSON.parse(localStorage.getItem('sehathub_last_booking'));
+      if (saved && saved.kode) {
+        setKode(saved.kode);
+      }
+    } catch (e) {}
   };
 
   const sisaAntrean = nomorAnda - nomorSekarang;
-  const estimasiWaktu = sisaAntrean * 5; // Asumsi 1 orang = 5 menit
+  const estimasiWaktu = sisaAntrean * 5; 
   const progressPersen = nomorAnda > 0 ? ((nomorSekarang / nomorAnda) * 100).toFixed(0) : 0;
 
   return (
     <section id="cek-antrean" className="py-20 bg-white relative overflow-hidden">
       <div id="antrean" className="absolute top-0"></div>
       
-      {/* Dekorasi Background */}
       <div className="absolute top-0 right-0 w-64 h-64 bg-orange-50 rounded-full blur-3xl opacity-50 -translate-y-1/2 translate-x-1/4 pointer-events-none"></div>
       
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="text-center mb-10">
           <h2 className="text-3xl font-extrabold text-slate-900 mb-4">Lacak Antrean <span className="text-orange-500">Real-Time</span></h2>
-          <p className="text-slate-500 text-sm max-w-xl mx-auto">Pantau pergerakan nomor antrean Anda dari mana saja. Tidak perlu lagi menunggu lama di ruang tunggu fasilitas kesehatan.</p>
+          <p className="text-slate-500 text-sm max-w-xl mx-auto">Pantau pergerakan nomor antrean dan status verifikasi admin faskes dari mana saja.</p>
         </div>
 
         <div className="bg-slate-50 rounded-3xl p-6 md:p-10 shadow-xl border border-slate-100">
           
           {/* Form Pencarian */}
-          <form onSubmit={handleCek} className="max-w-lg mx-auto flex gap-3 mb-6">
+          <form onSubmit={handleCek} className="max-w-lg mx-auto flex gap-3 mb-3">
             <div className="relative flex-1">
               <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                 <i className="fa-solid fa-ticket text-slate-400"></i>
@@ -116,7 +139,7 @@ export default function CekAntrean() {
                 type="text" 
                 value={kode}
                 onChange={(e) => setKode(e.target.value.toUpperCase())}
-                placeholder="Masukkan Kode Booking / NIK" 
+                placeholder="Masukkan Kode Booking (Contoh: SH-9X7P)" 
                 required 
                 maxLength="10"
                 className="w-full pl-11 pr-4 py-4 border border-slate-200 bg-white rounded-xl text-sm font-semibold outline-none focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 transition-all uppercase tracking-wider" 
@@ -126,6 +149,17 @@ export default function CekAntrean() {
               {status === 'loading' ? <i className="fa-solid fa-circle-notch fa-spin text-xl"></i> : 'Lacak'}
             </button>
           </form>
+
+          {/* Pintasan Isi Kode Otomatis */}
+          <div className="max-w-lg mx-auto mb-6 flex justify-end">
+            <button
+              type="button"
+              onClick={isiKodeTerakhir}
+              className="text-xs font-bold text-orange-600 hover:text-orange-700 hover:underline flex items-center gap-1"
+            >
+              <i className="fa-solid fa-wand-magic-sparkles"></i> Gunakan Kode Booking Terakhir Saya
+            </button>
+          </div>
 
           {/* Notifikasi Error */}
           {status === 'error' && (
@@ -142,19 +176,33 @@ export default function CekAntrean() {
           {status === 'tracking' && (
             <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm animate-[fadeIn_0.4s_ease-out]">
               
-              <div className="flex items-center justify-between mb-6 pb-6 border-b border-slate-100">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 pb-6 border-b border-slate-100">
                 <div className="flex items-center gap-3">
                   <div className="w-12 h-12 rounded-full bg-orange-100 flex items-center justify-center">
                     <i className="fa-solid fa-hospital-user text-orange-500 text-xl"></i>
                   </div>
                   <div>
-                    <p className="text-xs text-slate-500 font-bold uppercase tracking-wider mb-0.5">Kode Booking</p>
-                    <p className="text-lg font-extrabold text-slate-800">{kode}</p>
-                    <p className="text-[10px] text-slate-400 font-medium mt-0.5"><i className="fa-solid fa-location-dot text-orange-400 mr-1"></i> {faskesNama}</p>
+                    <p className="text-xs text-slate-500 font-bold uppercase tracking-wider mb-0.5">Kode Booking: <span className="text-orange-600 font-mono">{kode}</span></p>
+                    <p className="text-base font-extrabold text-slate-800">{faskesNama}</p>
+                    <p className="text-[11px] text-slate-400 font-medium mt-0.5"><i className="fa-regular fa-calendar text-orange-400 mr-1"></i> Jadwal: {jadwalWaktu}</p>
                   </div>
                 </div>
-                <div className="text-right">
-                  <span className="inline-flex items-center gap-1.5 bg-emerald-50 text-emerald-600 text-xs font-bold px-3 py-1.5 rounded-full border border-emerald-100">
+                <div className="flex flex-wrap items-center gap-2 sm:justify-end">
+                  {/* Badge Status Verifikasi Admin */}
+                  <span className={`inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-full border ${
+                    statusVerifikasi === 'Disetujui'
+                      ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                      : statusVerifikasi === 'Selesai'
+                      ? 'bg-blue-50 text-blue-700 border-blue-200'
+                      : 'bg-amber-50 text-amber-700 border-amber-200'
+                  }`}>
+                    <i className={`fa-solid ${
+                      statusVerifikasi === 'Disetujui' ? 'fa-circle-check' : statusVerifikasi === 'Selesai' ? 'fa-flag-checkered' : 'fa-clock'
+                    }`}></i>
+                    Status Admin: {statusVerifikasi}
+                  </span>
+
+                  <span className="inline-flex items-center gap-1.5 bg-slate-100 text-slate-700 text-xs font-bold px-3 py-1.5 rounded-full">
                     <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
                     Live Tracking
                   </span>
@@ -166,19 +214,19 @@ export default function CekAntrean() {
                 <div className="text-center md:text-left">
                   <p className="text-sm font-bold text-slate-500 mb-2">Sedang Dilayani di Loket</p>
                   <div className="text-5xl font-extrabold text-slate-900 mb-2">
-                    A-{nomorSekarang.toString().padStart(3, '0')}
+                    A-{nomorSekarang.toString().padStart(2, '0')}
                   </div>
-                  <p className="text-xs text-slate-400">Panggilan terakhir beberapa saat lalu</p>
+                  <p className="text-xs text-slate-400">Diperbarui secara otomatis</p>
                 </div>
 
                 {/* Kartu Antrean Anda */}
                 <div className="bg-gradient-to-br from-orange-500 to-amber-500 rounded-2xl p-6 text-white shadow-lg shadow-orange-500/30 relative overflow-hidden">
                   <i className="fa-solid fa-ticket absolute -right-4 -bottom-4 text-8xl opacity-20 transform -rotate-12"></i>
                   <p className="text-orange-100 text-sm font-semibold mb-1">Nomor Antrean Anda</p>
-                  <div className="text-4xl font-extrabold mb-4">A-{nomorAnda.toString().padStart(3, '0')}</div>
+                  <div className="text-4xl font-extrabold mb-4">A-{nomorAnda.toString().padStart(2, '0')}</div>
                   <div className="flex items-center justify-between text-sm font-medium bg-white/20 p-3 rounded-xl backdrop-blur-sm">
                     {sisaAntrean <= 0 ? (
-                      <span className="flex items-center gap-2 font-bold"><i className="fa-solid fa-bell animate-bounce"></i> Giliran Anda Sekarang!</span>
+                      <span className="flex items-center gap-2 font-bold"><i className="fa-solid fa-bell animate-bounce"></i> Giliran Anda Sekarang / Selesai!</span>
                     ) : (
                       <>
                         <span className="flex items-center gap-2"><i className="fa-solid fa-users"></i> Sisa {sisaAntrean} orang</span>

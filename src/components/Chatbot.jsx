@@ -1,15 +1,15 @@
 import { useState, useRef, useEffect } from 'react';
+import { INITIAL_FASKES } from '../utils/data';
 
 export default function Chatbot() {
   const [isOpen, setIsOpen] = useState(false);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   
-  // Fungsi untuk mendapatkan waktu saat ini (HH:MM)
   const getCurrentTime = () => new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
   const initialMessage = { 
-    text: "Halo! Saya AI SehatHub. Ada yang bisa saya bantu terkait pencarian faskes atau cara mengambil antrean?", 
+    text: "Halo! Saya AI SehatHub 🤖. Saya bisa membantu mengecek status tiket antrean Anda secara otomatis, merekomendasikan Poli berdasarkan gejala keluhan, atau mencarikan faskes terdekat!", 
     sender: 'ai',
     time: getCurrentTime()
   };
@@ -17,25 +17,47 @@ export default function Chatbot() {
   const [messages, setMessages] = useState([initialMessage]);
   const messagesEndRef = useRef(null);
 
-  // Auto-scroll ke pesan terbaru
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isTyping]);
 
   const processQuery = (queryText) => {
     const lower = queryText.toLowerCase();
-    let reply = "Maaf, saya masih terus belajar. Namun Anda bisa mengeksplorasi layanan kami langsung melalui menu navigasi di atas!";
+    let reply = "Maaf, saya belum menangkap maksud Anda. Coba tanyakan tentang 'Cek antrean saya', 'Rekomendasi faskes Purwokerto', atau keluhan seperti 'Sakit gigi / Demam'.";
 
-    if (lower.includes('antre') || lower.includes('tiket') || lower.includes('daftar') || lower.includes('ambil')) {
-      reply = "Untuk mengambil antrean, silakan pilih Fasilitas Kesehatan yang Anda tuju, lalu klik tombol 'Antrean' berwarna oranye. Anda akan mendapatkan Kode Booking unik secara otomatis.";
-    } else if (lower.includes('lacak') || lower.includes('cek') || lower.includes('status') || lower.includes('kode')) {
-      reply = "Anda bisa melacak status antrean secara real-time! Cukup buka menu 'Cek Antrean' di bagian atas, lalu masukkan Kode Booking yang telah Anda dapatkan sebelumnya.";
-    } else if (lower.includes('lokasi') || lower.includes('peta') || lower.includes('alamat') || lower.includes('faskes')) {
-      reply = "Anda bisa melihat titik lokasi seluruh fasilitas kesehatan secara nasional dengan mengklik tombol 'Peta' pada masing-masing kartu faskes.";
-    } else if (lower.includes('halo') || lower.includes('hai') || lower.includes('pagi') || lower.includes('siang')) {
-      reply = "Halo juga! Ingin mencari fasilitas kesehatan terdekat atau melacak nomor antrean Anda hari ini?";
+    // 1. Cek Tiket Antrean Aktif milik User dari LocalStorage
+    if (lower.includes('tiket saya') || lower.includes('antrean saya') || lower.includes('kode saya') || lower.includes('status saya')) {
+      try {
+        const lastBooking = JSON.parse(localStorage.getItem('sehathub_last_booking'));
+        if (lastBooking) {
+          reply = `📋 Data E-Ticket Terakhir Anda:\n• Kode Booking: ${lastBooking.kode}\n• Nomor Urut: ${lastBooking.nomor}\n• Tujuan: ${lastBooking.faskesNama} (${lastBooking.poli || 'Poli Umum'})\n• Jadwal: ${lastBooking.waktu}\n• Status Admin: ${lastBooking.status || 'Menunggu'}`;
+        } else {
+          reply = "Anda belum memiliki tiket antrean aktif saat ini. Silakan pilih Faskes di daftar utama lalu klik tombol 'Antrean' untuk mendaftar.";
+        }
+      } catch (e) {
+        reply = "Belum ada data antrean yang tersimpan di perangkat Anda.";
+      }
+    } 
+    // 2. Triase Gejala Medis Pintar
+    else if (lower.includes('gigi') || lower.includes('gusi') || lower.includes('karang')) {
+      reply = "🦷 Untuk keluhan gigi dan mulut, kami menyarankan Anda memilih 'Poli Gigi'. Di Purwokerto, Anda bisa mendaftar ke Puskesmas Purwokerto Selatan, Klinik Pratama UMP, atau Puskesmas Purwokerto Utara II.";
+    } else if (lower.includes('demam') || lower.includes('batuk') || lower.includes('flu') || lower.includes('pusing') || lower.includes('sakit kepala')) {
+      reply = "🌡️ Untuk gejala demam, flu, atau pusing, silakan ambil antrean di 'Poli Umum' pada Puskesmas atau Klinik Pratama terdekat agar segera mendapat pemeriksaan awal.";
+    } else if (lower.includes('darurat') || lower.includes('igd') || lower.includes('kecelakaan') || lower.includes('sesak')) {
+      reply = "🚨 KONDISI DARURAT: Segera menuju layanan 'IGD 24 Jam' terdekat seperti RSUD Prof. Dr. Margono Soekarjo ((0281) 632708) atau RS Islam Purwokerto ((0281) 630019)!";
+    }
+    // 3. Pencarian Faskes Purwokerto / Kategori
+    else if (lower.includes('purwokerto') || lower.includes('terdekat') || lower.includes('rekomendasi')) {
+      const pwtFaskes = INITIAL_FASKES.filter(f => f.city === 'Purwokerto').map(f => `• ${f.name} (${f.type})`).join('\n');
+      reply = `🏥 Berikut daftar Faskes terintegrasi di Purwokerto:\n${pwtFaskes}\n\nAnda bisa langsung klik tombol 'Antrean' atau 'Peta' pada kartu faskes di halaman utama!`;
+    } else if (lower.includes('antre') || lower.includes('daftar') || lower.includes('ambil')) {
+      reply = "Cara mengambil antrean sangat mudah: Pilih Fasilitas Kesehatan yang Anda tuju, klik tombol 'Antrean', pilih Poli Layanan serta jadwal kunjungan, lalu E-Ticket beserta Kode Booking akan langsung terbit!";
+    } else if (lower.includes('lacak') || lower.includes('cek') || lower.includes('kode')) {
+      reply = "Anda bisa melacak pergerakan nomor loket secara real-time di bagian 'Lacak Antrean Real-Time', atau ketik 'Cek antrean saya' di chat ini untuk melihat detail tiket Anda!";
+    } else if (lower.includes('halo') || lower.includes('hai') || lower.includes('pagi') || lower.includes('siang') || lower.includes('malam')) {
+      reply = "Halo! Semoga sehat selalu 👋. Ingin mengecek tiket antrean aktif Anda, mencari faskes di Purwokerto, atau konsultasi poli layanan hari ini?";
     } else if (lower.includes('tim') || lower.includes('pembuat') || lower.includes('siapa') || lower.includes('gejas')) {
-      reply = "Website SehatHub ini dikembangkan oleh Tim Gejas Gejes! Sebuah solusi inovatif untuk layanan kesehatan publik.";
+      reply = "Platform SehatHub ini dikembangkan dengan penuh dedikasi oleh Gejas Gejes Team sebagai inovasi digitalisasi layanan kesehatan publik yang cepat dan transparan!";
     }
 
     setMessages(prev => [...prev, { text: reply, sender: 'ai', time: getCurrentTime() }]);
@@ -53,7 +75,7 @@ export default function Chatbot() {
 
     setTimeout(() => {
       processQuery(userText);
-    }, 1200); // Sedikit lebih lama agar terasa lebih natural
+    }, 900);
   };
 
   const handleQuickClick = (questionText) => {
@@ -62,7 +84,7 @@ export default function Chatbot() {
     
     setTimeout(() => {
       processQuery(questionText);
-    }, 1200);
+    }, 900);
   };
 
   const resetChat = () => {
@@ -71,15 +93,13 @@ export default function Chatbot() {
 
   return (
     <>
-      {/* Gelembung Sapaan Melayang (Muncul saat bot tertutup) */}
       {!isOpen && (
         <div className="fixed bottom-24 right-6 z-40 bg-white px-5 py-3 rounded-2xl shadow-xl border border-slate-100 animate-bounce cursor-pointer" onClick={() => setIsOpen(true)}>
-          <p className="text-xs font-extrabold text-slate-700">Hai, butuh bantuan? <span className="text-sm">👋</span></p>
+          <p className="text-xs font-extrabold text-slate-700">Tanya AI SehatHub <span className="text-sm">👋</span></p>
           <div className="absolute -bottom-2 right-5 w-4 h-4 bg-white rotate-45 border-b border-r border-slate-100"></div>
         </div>
       )}
 
-      {/* Tombol Floating */}
       <button 
         onClick={() => setIsOpen(true)}
         className={`fixed bottom-6 right-6 z-50 w-14 h-14 bg-gradient-to-br from-orange-500 to-amber-500 rounded-full flex items-center justify-center text-white shadow-lg shadow-orange-500/40 hover:scale-110 hover:shadow-orange-500/60 transition-all duration-300 ${isOpen ? 'scale-0 opacity-0' : 'scale-100 opacity-100'}`}
@@ -87,7 +107,6 @@ export default function Chatbot() {
         <i className="fa-solid fa-robot text-2xl"></i>
       </button>
 
-      {/* Jendela Chat Utama */}
       <div className={`fixed bottom-6 right-6 z-50 w-[340px] md:w-[400px] bg-white rounded-3xl shadow-2xl border border-slate-200 flex flex-col overflow-hidden transition-all duration-400 ease-[cubic-bezier(0.16,1,0.3,1)] origin-bottom-right ${isOpen ? 'scale-100 opacity-100 translate-y-0' : 'scale-90 opacity-0 pointer-events-none translate-y-4'}`}>
         
         {/* Header Bot */}
@@ -98,8 +117,8 @@ export default function Chatbot() {
               <span className="absolute bottom-0.5 right-0.5 w-2.5 h-2.5 bg-emerald-400 border-2 border-orange-500 rounded-full"></span>
             </div>
             <div>
-              <h3 className="font-bold text-sm leading-tight tracking-wide">SehatHub AI</h3>
-              <p className="text-[11px] text-orange-100 font-medium">Asisten Virtual Cerdas</p>
+              <h3 className="font-bold text-sm leading-tight tracking-wide">SehatHub Smart AI</h3>
+              <p className="text-[11px] text-orange-100 font-medium">Asisten Medis & Antrean Real-Time</p>
             </div>
           </div>
           <div className="flex items-center gap-1">
@@ -114,20 +133,17 @@ export default function Chatbot() {
 
         {/* Area Pesan */}
         <div className="h-[360px] p-4 overflow-y-auto bg-slate-50 flex flex-col gap-4">
-          <p className="text-center text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Hari ini</p>
+          <p className="text-center text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Percakapan Aktif</p>
           
           {messages.map((msg, i) => (
             <div key={i} className={`flex gap-2 ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
-              
-              {/* Avatar AI jika pengirimnya adalah bot */}
               {msg.sender === 'ai' && (
                 <div className="w-8 h-8 rounded-full bg-orange-100 border border-orange-200 flex items-center justify-center flex-shrink-0 mt-1">
                   <i className="fa-solid fa-robot text-orange-500 text-xs"></i>
                 </div>
               )}
 
-              {/* Gelembung Chat */}
-              <div className={`max-w-[75%] p-3.5 rounded-2xl text-sm shadow-sm leading-relaxed relative ${msg.sender === 'user' ? 'bg-gradient-to-br from-orange-500 to-amber-500 text-white rounded-br-sm' : 'bg-white border border-slate-200 text-slate-700 rounded-bl-sm'}`}>
+              <div className={`max-w-[78%] p-3.5 rounded-2xl text-xs md:text-sm shadow-sm leading-relaxed whitespace-pre-line relative ${msg.sender === 'user' ? 'bg-gradient-to-br from-orange-500 to-amber-500 text-white rounded-br-sm' : 'bg-white border border-slate-200 text-slate-700 rounded-bl-sm'}`}>
                 {msg.text}
                 <span className={`block text-[10px] mt-1.5 font-medium ${msg.sender === 'user' ? 'text-orange-100 text-right' : 'text-slate-400 text-left'}`}>
                   {msg.time}
@@ -136,7 +152,6 @@ export default function Chatbot() {
             </div>
           ))}
           
-          {/* Animasi Sedang Mengetik (Typing Indicator) */}
           {isTyping && (
             <div className="flex gap-2 justify-start">
               <div className="w-8 h-8 rounded-full bg-orange-100 border border-orange-200 flex items-center justify-center flex-shrink-0 mt-1">
@@ -152,16 +167,16 @@ export default function Chatbot() {
           <div ref={messagesEndRef} />
         </div>
 
-        {/* Tombol Pilihan Cepat (Quick Chips) */}
-        <div className="px-3 py-3 bg-white border-t border-slate-100 flex gap-2 overflow-x-auto no-scrollbar shadow-[0_-4px_10px_rgba(0,0,0,0.02)] z-10 relative">
-          <button onClick={() => handleQuickClick("Cara ambil antrean?")} className="bg-slate-50 hover:bg-orange-50 text-slate-600 hover:text-orange-600 text-xs px-3.5 py-2 rounded-xl font-bold whitespace-nowrap border border-slate-200 hover:border-orange-200 transition-all flex items-center gap-2">
-            <i className="fa-solid fa-ticket text-orange-500"></i> Ambil Antrean
+        {/* Quick Chips */}
+        <div className="px-3 py-2.5 bg-white border-t border-slate-100 flex gap-2 overflow-x-auto no-scrollbar">
+          <button onClick={() => handleQuickClick("Cek antrean saya")} className="bg-orange-50 hover:bg-orange-100 text-orange-700 text-xs px-3 py-1.5 rounded-xl font-bold whitespace-nowrap border border-orange-200 transition-all flex items-center gap-1.5">
+            <i className="fa-solid fa-ticket text-orange-500"></i> Cek Tiket Saya
           </button>
-          <button onClick={() => handleQuickClick("Cara lacak status antrean?")} className="bg-slate-50 hover:bg-orange-50 text-slate-600 hover:text-orange-600 text-xs px-3.5 py-2 rounded-xl font-bold whitespace-nowrap border border-slate-200 hover:border-orange-200 transition-all flex items-center gap-2">
-            <i className="fa-solid fa-magnifying-glass text-orange-500"></i> Lacak Status
+          <button onClick={() => handleQuickClick("Rekomendasi faskes Purwokerto")} className="bg-slate-50 hover:bg-orange-50 text-slate-600 hover:text-orange-600 text-xs px-3 py-1.5 rounded-xl font-bold whitespace-nowrap border border-slate-200 transition-all flex items-center gap-1.5">
+            <i className="fa-solid fa-hospital text-orange-500"></i> Faskes Purwokerto
           </button>
-          <button onClick={() => handleQuickClick("Siapa pembuat SehatHub?")} className="bg-slate-50 hover:bg-orange-50 text-slate-600 hover:text-orange-600 text-xs px-3.5 py-2 rounded-xl font-bold whitespace-nowrap border border-slate-200 hover:border-orange-200 transition-all flex items-center gap-2">
-            <i className="fa-solid fa-code text-orange-500"></i> Info Developer
+          <button onClick={() => handleQuickClick("Saya keluhan demam & batuk")} className="bg-slate-50 hover:bg-orange-50 text-slate-600 hover:text-orange-600 text-xs px-3 py-1.5 rounded-xl font-bold whitespace-nowrap border border-slate-200 transition-all flex items-center gap-1.5">
+            <i className="fa-solid fa-stethoscope text-orange-500"></i> Cek Gejala
           </button>
         </div>
 
@@ -171,10 +186,10 @@ export default function Chatbot() {
             type="text" 
             value={input} 
             onChange={(e) => setInput(e.target.value)} 
-            placeholder="Ketik pesan Anda..." 
+            placeholder="Tanya tiket, gejala, atau faskes..." 
             className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm outline-none focus:bg-white focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 transition-all"
           />
-          <button type="submit" disabled={!input.trim()} className="bg-slate-900 hover:bg-black text-white w-12 h-12 rounded-xl flex items-center justify-center transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none">
+          <button type="submit" disabled={!input.trim()} className="bg-slate-900 hover:bg-black text-white w-12 h-12 rounded-xl flex items-center justify-center transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed">
             <i className="fa-solid fa-paper-plane"></i>
           </button>
         </form>

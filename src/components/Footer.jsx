@@ -2,6 +2,16 @@ import { useState } from 'react';
 
 export default function Footer() {
   const [activeModal, setActiveModal] = useState(null);
+  const [mitraSubmitted, setMitraSubmitted] = useState(false);
+
+  const handleMitraSubmit = (e) => {
+    e.preventDefault();
+    setMitraSubmitted(true);
+    setTimeout(() => {
+      setMitraSubmitted(false);
+      setActiveModal(null);
+    }, 2500);
+  };
 
   const modalContent = {
     artikel: {
@@ -75,6 +85,42 @@ export default function Footer() {
           </ul>
         </div>
       )
+    },
+    mitra: {
+      title: 'Pendaftaran Mitra Faskes SehatHub',
+      icon: 'fa-handshake-angle',
+      content: mitraSubmitted ? (
+        <div className="text-center py-6 space-y-3">
+          <div className="w-14 h-14 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto text-2xl">
+            <i className="fa-solid fa-check"></i>
+          </div>
+          <h4 className="font-bold text-slate-800 text-base">Permohonan Kolaborasi Terkirim!</h4>
+          <p className="text-xs text-slate-500 max-w-xs mx-auto">Tim integrasi SehatHub akan segera menghubungi pengelola fasilitas kesehatan Anda dalam 1x24 jam.</p>
+        </div>
+      ) : (
+        <form onSubmit={handleMitraSubmit} className="space-y-4 text-sm">
+          <p className="text-xs text-slate-500">Daftarkan Puskesmas, Rumah Sakit, atau Klinik Anda agar terhubung dengan sistem antrean pintar SehatHub.</p>
+          <div>
+            <label className="block text-xs font-bold text-slate-600 mb-1">Nama Fasilitas Kesehatan</label>
+            <input type="text" required placeholder="Contoh: Klinik Pratama Sehat" className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm outline-none focus:border-orange-500" />
+          </div>
+          <div>
+            <label className="block text-xs font-bold text-slate-600 mb-1">Kategori Faskes</label>
+            <select className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm outline-none focus:border-orange-500 bg-white">
+              <option value="Puskesmas">Puskesmas</option>
+              <option value="Rumah Sakit">Rumah Sakit</option>
+              <option value="Klinik">Klinik Swasta / Apotek</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-xs font-bold text-slate-600 mb-1">Kontak Pengelola (WhatsApp / Email)</label>
+            <input type="text" required placeholder="0812xxxxxxxx / admin@klinik.id" className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm outline-none focus:border-orange-500" />
+          </div>
+          <button type="submit" className="w-full bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 text-white py-3 rounded-xl font-bold text-sm shadow-md transition-all">
+            Ajukan Integrasi Mitra
+          </button>
+        </form>
+      )
     }
   };
 
@@ -83,7 +129,6 @@ export default function Footer() {
       <footer className="bg-slate-900 text-slate-300 border-t-4 border-orange-500 pt-16 pb-8 mt-20 relative z-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           
-          {/* Area Utama Footer (4 Kolom) */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 mb-12 border-b border-slate-800 pb-12">
             
             {/* Kolom 1: Brand & Deskripsi */}
@@ -96,9 +141,9 @@ export default function Footer() {
                 Portal terpadu untuk pencarian fasilitas kesehatan dan antrean online. Menghadirkan akses kesehatan yang lebih cepat dan transparan untuk warga Purwokerto dan sekitarnya.
               </p>
               <div className="flex gap-4">
-                <a href="#" className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center hover:bg-gradient-to-tr hover:from-yellow-400 hover:via-pink-500 hover:to-purple-500 hover:text-white transition-all duration-300"><i className="fa-brands fa-instagram"></i></a>
-                <a href="#" className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center hover:bg-blue-600 hover:text-white transition-all duration-300"><i className="fa-brands fa-facebook-f"></i></a>
-                <a href="#" className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center hover:bg-black hover:text-white transition-all duration-300"><i className="fa-brands fa-x-twitter"></i></a>
+                <a href="#beranda" className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center hover:bg-gradient-to-tr hover:from-yellow-400 hover:via-pink-500 hover:to-purple-500 hover:text-white transition-all duration-300"><i className="fa-brands fa-instagram"></i></a>
+                <a href="#beranda" className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center hover:bg-blue-600 hover:text-white transition-all duration-300"><i className="fa-brands fa-facebook-f"></i></a>
+                <a href="#beranda" className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center hover:bg-black hover:text-white transition-all duration-300"><i className="fa-brands fa-x-twitter"></i></a>
               </div>
             </div>
 
@@ -113,7 +158,7 @@ export default function Footer() {
               </ul>
             </div>
 
-            {/* Kolom 3: Layanan & Bantuan (Artikel Kesehatan Interaktif) */}
+            {/* Kolom 3: Layanan & Bantuan */}
             <div>
               <h4 className="text-white font-bold mb-5 uppercase tracking-wider text-sm">Bantuan</h4>
               <ul className="space-y-3 text-sm">
@@ -132,7 +177,7 @@ export default function Footer() {
             <div>
               <h4 className="text-white font-bold mb-5 uppercase tracking-wider text-sm">Kolaborasi</h4>
               <p className="text-sm text-slate-400 mb-4">Tertarik mengintegrasikan faskes Anda dengan sistem antrean SehatHub?</p>
-              <button onClick={() => alert('Fitur Pendaftaran Mitra akan segera hadir!')} className="bg-slate-800 hover:bg-orange-500 text-white text-sm font-medium py-2.5 px-5 rounded-lg transition-colors border border-slate-700 hover:border-orange-500 w-full mb-4">
+              <button onClick={() => setActiveModal('mitra')} className="bg-slate-800 hover:bg-orange-500 text-white text-sm font-medium py-2.5 px-5 rounded-lg transition-colors border border-slate-700 hover:border-orange-500 w-full mb-4">
                 Daftar Sebagai Mitra
               </button>
               <div className="text-xs text-slate-500">
@@ -143,7 +188,6 @@ export default function Footer() {
 
           </div>
 
-          {/* Area Bawah (Copyright & Tech Stack) */}
           <div className="flex flex-col md:flex-row justify-between items-center gap-6 text-sm text-slate-500">
             <div className="text-center md:text-left">
               <span>© 2026 SehatHub. Purwokerto, Jawa Tengah.</span>
@@ -166,7 +210,7 @@ export default function Footer() {
         </div>
       </footer>
 
-      {/* Modal Interaktif (FAQ, Syarat, Privasi, & Artikel Kesehatan) */}
+      {/* Modal Interaktif */}
       {activeModal && modalContent[activeModal] && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-sm">
           <div className="bg-white rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden border border-white/20">
@@ -182,11 +226,13 @@ export default function Footer() {
             <div className="p-6 max-h-[60vh] overflow-y-auto">
               {modalContent[activeModal].content}
             </div>
-            <div className="p-4 bg-slate-50 border-t border-slate-100 text-center">
-              <button onClick={() => setActiveModal(null)} className="bg-orange-500 hover:bg-orange-600 text-white px-8 py-2.5 rounded-xl font-bold text-sm transition-colors shadow-md shadow-orange-500/20">
-                Tutup Paham
-              </button>
-            </div>
+            {activeModal !== 'mitra' && (
+              <div className="p-4 bg-slate-50 border-t border-slate-100 text-center">
+                <button onClick={() => setActiveModal(null)} className="bg-orange-500 hover:bg-orange-600 text-white px-8 py-2.5 rounded-xl font-bold text-sm transition-colors shadow-md shadow-orange-500/20">
+                  Tutup Paham
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}
