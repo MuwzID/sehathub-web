@@ -4,6 +4,29 @@ export default function Footer() {
   const [activeModal, setActiveModal] = useState(null);
 
   const modalContent = {
+    artikel: {
+      title: 'Artikel & Edukasi Kesehatan',
+      icon: 'fa-book-medical',
+      content: (
+        <div className="space-y-5">
+          <div className="border-b border-slate-100 pb-4">
+            <span className="text-[10px] bg-orange-100 text-orange-700 font-bold px-2 py-0.5 rounded-full">Edukasi Warga</span>
+            <h4 className="font-bold text-slate-800 text-base mt-1.5">Tips Menjaga Imunitas Tubuh di Musim Peralihan Cuaca</h4>
+            <p className="text-sm text-slate-600 mt-1">Perubahan cuaca yang drastis seringkali memicu flu dan kelelahan. Pastikan konsumsi air putih cukup, vitamin C alami, serta istirahat teratur untuk menjaga stamina tubuh tetap prima.</p>
+          </div>
+          <div className="border-b border-slate-100 pb-4">
+            <span className="text-[10px] bg-emerald-100 text-emerald-700 font-bold px-2 py-0.5 rounded-full">Panduan Medis</span>
+            <h4 className="font-bold text-slate-800 text-base mt-1.5">Panduan Efektif Mengambil Nomor Antrean Online di SehatHub</h4>
+            <p className="text-sm text-slate-600 mt-1">Gunakan fitur pencarian faskes terdekat untuk melihat estimasi jarak secara real-time. Pilih jadwal pagi atau sore sesuai kebutuhan kunjungan Anda agar terhindar dari antrean panjang.</p>
+          </div>
+          <div>
+            <span className="text-[10px] bg-blue-100 text-blue-700 font-bold px-2 py-0.5 rounded-full">Kesehatan Publik</span>
+            <h4 className="font-bold text-slate-800 text-base mt-1.5">Pentingnya Pemeriksaan Kesehatan Rutin (Medical Check-Up)</h4>
+            <p className="text-sm text-slate-600 mt-1">Deteksi dini penyakit kronis seperti hipertensi dan diabetes melalui kunjungan berkala ke Puskesmas atau Klinik terdekat dapat meminimalisir risiko komplikasi kesehatan.</p>
+          </div>
+        </div>
+      )
+    },
     faq: {
       title: 'FAQ / Tanya Jawab',
       icon: 'fa-circle-question',
@@ -90,11 +113,15 @@ export default function Footer() {
               </ul>
             </div>
 
-            {/* Kolom 3: Layanan & Bantuan (Dimodifikasi Menjadi Tombol Modal) */}
+            {/* Kolom 3: Layanan & Bantuan (Artikel Kesehatan Interaktif) */}
             <div>
               <h4 className="text-white font-bold mb-5 uppercase tracking-wider text-sm">Bantuan</h4>
               <ul className="space-y-3 text-sm">
-                <li><span className="text-slate-500 transition-colors inline-flex items-center gap-2 cursor-not-allowed"><i className="fa-solid fa-angle-right text-xs"></i> Artikel Kesehatan (Segera)</span></li>
+                <li>
+                  <button onClick={() => setActiveModal('artikel')} className="hover:text-orange-500 transition-colors inline-flex items-center gap-2 text-left w-full">
+                    <i className="fa-solid fa-angle-right text-xs text-orange-500"></i> Artikel Kesehatan
+                  </button>
+                </li>
                 <li><button onClick={() => setActiveModal('faq')} className="hover:text-orange-500 transition-colors inline-flex items-center gap-2 text-left w-full"><i className="fa-solid fa-angle-right text-xs text-orange-500"></i> FAQ / Tanya Jawab</button></li>
                 <li><button onClick={() => setActiveModal('syarat')} className="hover:text-orange-500 transition-colors inline-flex items-center gap-2 text-left w-full"><i className="fa-solid fa-angle-right text-xs text-orange-500"></i> Syarat & Ketentuan</button></li>
                 <li><button onClick={() => setActiveModal('privasi')} className="hover:text-orange-500 transition-colors inline-flex items-center gap-2 text-left w-full"><i className="fa-solid fa-angle-right text-xs text-orange-500"></i> Kebijakan Privasi</button></li>
@@ -139,7 +166,7 @@ export default function Footer() {
         </div>
       </footer>
 
-      {/* Modal Bantuan */}
+      {/* Modal Interaktif (FAQ, Syarat, Privasi, & Artikel Kesehatan) */}
       {activeModal && modalContent[activeModal] && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-sm">
           <div className="bg-white rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden border border-white/20">
