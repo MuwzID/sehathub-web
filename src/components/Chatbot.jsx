@@ -34,7 +34,7 @@ export default function Chatbot() {
         } else {
           reply = "Anda belum memiliki tiket antrean aktif saat ini. Silakan pilih Faskes di daftar utama lalu klik tombol 'Antrean' untuk mendaftar.";
         }
-      } catch (e) {
+      } catch {
         reply = "Belum ada data antrean yang tersimpan di perangkat Anda.";
       }
     } 
@@ -91,30 +91,47 @@ export default function Chatbot() {
     setMessages([initialMessage]);
   };
 
+  const [dismissCallout, setDismissCallout] = useState(false);
+
   return (
     <>
-      {!isOpen && (
-        <div className="fixed bottom-24 right-6 z-40 bg-white px-5 py-3 rounded-2xl shadow-xl border border-slate-100 animate-bounce cursor-pointer" onClick={() => setIsOpen(true)}>
-          <p className="text-xs font-extrabold text-slate-700">Tanya AI SehatHub <span className="text-sm">👋</span></p>
-          <div className="absolute -bottom-2 right-5 w-4 h-4 bg-white rotate-45 border-b border-r border-slate-100"></div>
+      {!isOpen && !dismissCallout && (
+        <div className="fixed bottom-24 right-6 z-30 bg-white pl-4 pr-2.5 py-2.5 rounded-2xl shadow-lg border border-slate-200 flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setIsOpen(true)}
+            className="text-xs font-extrabold text-slate-700 hover:text-orange-600 cursor-pointer flex items-center gap-1.5"
+          >
+            <span>Tanya AI SehatHub</span>
+            <span className="text-sm">👋</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setDismissCallout(true)}
+            aria-label="Sembunyikan sapaan AI"
+            className="text-slate-400 hover:text-slate-600 p-1 rounded-lg cursor-pointer"
+          >
+            <i className="fa-solid fa-xmark text-xs"></i>
+          </button>
         </div>
       )}
 
-      <button 
+      <button
+        type="button"
+        aria-label="Buka Asisten Chat AI SehatHub"
         onClick={() => setIsOpen(true)}
-        className={`fixed bottom-6 right-6 z-50 w-14 h-14 bg-gradient-to-br from-orange-500 to-amber-500 rounded-full flex items-center justify-center text-white shadow-lg shadow-orange-500/40 hover:scale-110 hover:shadow-orange-500/60 transition-all duration-300 ${isOpen ? 'scale-0 opacity-0' : 'scale-100 opacity-100'}`}
+        className={`fixed bottom-6 right-6 z-40 w-14 h-14 bg-gradient-to-br from-orange-500 to-amber-500 rounded-full flex items-center justify-center text-white shadow-lg shadow-orange-500/40 hover:scale-105 transition-all duration-300 cursor-pointer ${isOpen ? 'scale-0 opacity-0 pointer-events-none' : 'scale-100 opacity-100'}`}
       >
         <i className="fa-solid fa-robot text-2xl"></i>
       </button>
 
-      <div className={`fixed bottom-6 right-6 z-50 w-[340px] md:w-[400px] bg-white rounded-3xl shadow-2xl border border-slate-200 flex flex-col overflow-hidden transition-all duration-400 ease-[cubic-bezier(0.16,1,0.3,1)] origin-bottom-right ${isOpen ? 'scale-100 opacity-100 translate-y-0' : 'scale-90 opacity-0 pointer-events-none translate-y-4'}`}>
+      <div className={`fixed bottom-6 right-6 z-50 w-[340px] md:w-[400px] bg-white rounded-3xl shadow-2xl border border-slate-200 flex flex-col overflow-hidden transition-all duration-300 origin-bottom-right ${isOpen ? 'scale-100 opacity-100 translate-y-0' : 'scale-90 opacity-0 pointer-events-none translate-y-4'}`}>
         
         {/* Header Bot */}
         <div className="bg-gradient-to-r from-orange-500 to-amber-500 p-4 px-5 flex justify-between items-center text-white">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center relative backdrop-blur-sm border border-white/30">
               <i className="fa-solid fa-robot text-lg"></i>
-              <span className="absolute bottom-0.5 right-0.5 w-2.5 h-2.5 bg-emerald-400 border-2 border-orange-500 rounded-full"></span>
             </div>
             <div>
               <h3 className="font-bold text-sm leading-tight tracking-wide">SehatHub Smart AI</h3>
@@ -122,10 +139,10 @@ export default function Chatbot() {
             </div>
           </div>
           <div className="flex items-center gap-1">
-            <button onClick={resetChat} title="Bersihkan Obrolan" className="hover:bg-white/20 transition-colors w-8 h-8 rounded-full flex items-center justify-center text-orange-100 hover:text-white">
+            <button type="button" onClick={resetChat} aria-label="Bersihkan Obrolan" title="Bersihkan Obrolan" className="hover:bg-white/20 transition-colors w-8 h-8 rounded-full flex items-center justify-center text-orange-100 hover:text-white cursor-pointer">
               <i className="fa-solid fa-broom text-sm"></i>
             </button>
-            <button onClick={() => setIsOpen(false)} className="hover:bg-white/20 transition-colors w-8 h-8 rounded-full flex items-center justify-center">
+            <button type="button" onClick={() => setIsOpen(false)} aria-label="Tutup Chat AI" className="hover:bg-white/20 transition-colors w-8 h-8 rounded-full flex items-center justify-center cursor-pointer">
               <i className="fa-solid fa-xmark text-lg"></i>
             </button>
           </div>

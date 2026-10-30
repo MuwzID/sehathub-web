@@ -1,19 +1,71 @@
 import puskImg from '../assets/puskesmas.jpeg';
 import rsImg from '../assets/margono.jpeg';
+import klinikImg from '../assets/klinikump.jpeg';
 
 export const STORAGE_KEYS = {
   accounts: 'sehathub_react_accounts',
   currentUser: 'sehathub_react_user',
-  activeQueue: 'sehathub_react_queue'
+  activeQueue: 'sehathub_react_queue',
+  favorites: 'sehathub_favorite_faskes'
+};
+
+export const PRESET_AVATARS = [
+  {
+    id: 'av-1',
+    label: 'Budi (Warga)',
+    url: `data:image/svg+xml;utf8,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120"><rect width="120" height="120" rx="60" fill="#ffedd5"/><circle cx="60" cy="44" r="22" fill="#f97316"/><path d="M24 106c6-22 24-34 36-34s30 12 36 34" fill="#ea580c"/></svg>')}`
+  },
+  {
+    id: 'av-2',
+    label: 'Siti (Medis)',
+    url: `data:image/svg+xml;utf8,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120"><rect width="120" height="120" rx="60" fill="#d1fae5"/><circle cx="60" cy="44" r="22" fill="#10b981"/><path d="M24 106c6-22 24-34 36-34s30 12 36 34" fill="#059669"/></svg>')}`
+  },
+  {
+    id: 'av-3',
+    label: 'Rizky (Aktif)',
+    url: `data:image/svg+xml;utf8,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120"><rect width="120" height="120" rx="60" fill="#e0e7ff"/><circle cx="60" cy="44" r="22" fill="#6366f1"/><path d="M24 106c6-22 24-34 36-34s30 12 36 34" fill="#4f46e5"/></svg>')}`
+  },
+  {
+    id: 'av-4',
+    label: 'Nadia (Sehat)',
+    url: `data:image/svg+xml;utf8,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120"><rect width="120" height="120" rx="60" fill="#ffe4e6"/><circle cx="60" cy="44" r="22" fill="#f43f5e"/><path d="M24 106c6-22 24-34 36-34s30 12 36 34" fill="#e11d48"/></svg>')}`
+  },
+  {
+    id: 'av-5',
+    label: 'Dr. Hendra',
+    url: `data:image/svg+xml;utf8,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120"><rect width="120" height="120" rx="60" fill="#fef3c7"/><circle cx="60" cy="44" r="22" fill="#d97706"/><path d="M24 106c6-22 24-34 36-34s30 12 36 34" fill="#b45309"/></svg>')}`
+  }
+];
+
+export const DEFAULT_WARGA_PROFILE = {
+  name: 'Budi Santoso',
+  email: 'budi.santoso@sehathub.id',
+  role: 'user',
+  joinedAt: '12 Oktober 2026',
+  avatar: PRESET_AVATARS[0].url,
+  bio: 'Warga Purwokerto Selatan yang peduli gaya hidup sehat dan pemeriksaan medis berkala bersama keluarga.',
+  nik: '3302140901980001',
+  noBpjs: '0001829340112',
+  phone: '0812-3456-7890',
+  birthDate: '1998-01-09',
+  gender: 'Laki-laki',
+  bloodType: 'O+',
+  heightCm: 172,
+  weightKg: 66,
+  allergies: 'Tidak ada alergi obat, sensitif debu dingin',
+  chronicConditions: 'Tidak ada',
+  address: 'Jl. HR Bunyamin No. 88, Bancarkembar, Purwokerto Utara, Banyumas',
+  emergencyContactName: 'Siti Aminah (Istri)',
+  emergencyContactPhone: '0813-9876-5432'
 };
 
 export const INITIAL_FASKES = [
   // --- PURWOKERTO & BANYUMAS (FOKUS UTAMA PETA) ---
   { id: 'f1', name: 'Puskesmas Purwokerto Selatan', type: 'Puskesmas', city: 'Purwokerto', status: 'Buka', distance: '1.2 km', hours: '08:00 - 14:00 WIB', queueStatus: 'Ramai (24 antrean)', phone: '(0281) 635211', image: puskImg, services: ['Poli Umum', 'Poli Gigi', 'Farmasi', 'KIA'], lat: -7.4478, lng: 109.2353 },
   { id: 'f2', name: 'RSUD Prof. Dr. Margono Soekarjo', type: 'Rumah Sakit', city: 'Purwokerto', status: 'Buka', distance: '3.5 km', hours: '24 Jam', queueStatus: 'Padat (45 antrean)', phone: '(0281) 632708', image: rsImg, services: ['Poli Umum', 'IGD 24 Jam', 'Poli Anak', 'Poli Jantung'], lat: -7.4452, lng: 109.2666 },
-  { id: 'f3', name: 'Klinik Pratama UMP Purwokerto', type: 'Klinik', city: 'Purwokerto', status: 'Buka', distance: '2.1 km', hours: '08:00 - 20:00 WIB', queueStatus: 'Lancar (6 antrean)', phone: '(0281) 6844252', image: puskImg, services: ['Poli Umum', 'Poli Gigi', 'Laboratorium'], lat: -7.4133, lng: 109.2725 },
+  { id: 'f3', name: 'Klinik Pratama UMP Purwokerto', type: 'Klinik', city: 'Purwokerto', status: 'Buka', distance: '2.1 km', hours: '08:00 - 20:00 WIB', queueStatus: 'Lancar (6 antrean)', phone: '(0281) 6844252', image: klinikImg, services: ['Poli Umum', 'Poli Gigi', 'Laboratorium'], lat: -7.4133, lng: 109.2725 },
   { id: 'f7', name: 'RS Islam Purwokerto', type: 'Rumah Sakit', city: 'Purwokerto', status: 'Buka', distance: '2.8 km', hours: '24 Jam', queueStatus: 'Sedang (18 antrean)', phone: '(0281) 630019', image: rsImg, services: ['IGD 24 Jam', 'Poli Penyakit Dalam', 'Poli Bedah'], lat: -7.4198, lng: 109.2291 },
-  { id: 'f8', name: 'Klinik Utama Bunda Medika', type: 'Klinik', city: 'Purwokerto', status: 'Buka', distance: '1.9 km', hours: '07:30 - 21:00 WIB', queueStatus: 'Lancar (8 antrean)', phone: '(0281) 641920', image: puskImg, services: ['Poli Umum', 'KIA & Kandungan', 'Farmasi'], lat: -7.4285, lng: 109.2421 },
+  { id: 'f8', name: 'Klinik Utama Bunda Medika', type: 'Klinik', city: 'Purwokerto', status: 'Buka', distance: '1.9 km', hours: '07:30 - 21:00 WIB', queueStatus: 'Lancar (8 antrean)', phone: '(0281) 641920', image: klinikImg, services: ['Poli Umum', 'KIA & Kandungan', 'Farmasi'], lat: -7.4285, lng: 109.2421 },
   { id: 'f9', name: 'Puskesmas Purwokerto Utara II', type: 'Puskesmas', city: 'Purwokerto', status: 'Buka', distance: '3.0 km', hours: '08:00 - 14:30 WIB', queueStatus: 'Sedang (14 antrean)', phone: '(0281) 621840', image: puskImg, services: ['Poli Umum', 'Poli Gigi', 'Imunisasi'], lat: -7.4058, lng: 109.2462 },
 
   // --- JAWA LAINNYA ---

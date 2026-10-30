@@ -1,34 +1,35 @@
 import { useState, useEffect } from 'react';
+import { formatQueueMetrics } from '../utils/healthUtils';
 
 export default function CekAntrean() {
   const [kode, setKode] = useState('');
   const [status, setStatus] = useState('idle'); // idle, loading, tracking, error
   const [errorMsg, setErrorMsg] = useState('');
-  
+
   const [nomorSekarang, setNomorSekarang] = useState(0);
   const [nomorAnda, setNomorAnda] = useState(0);
   const [faskesNama, setFaskesNama] = useState('');
+  const [poliLayanan, setPoliLayanan] = useState('Poli Umum');
   const [statusVerifikasi, setStatusVerifikasi] = useState('Menunggu');
   const [jadwalWaktu, setJadwalWaktu] = useState('');
 
-  // --- FUNGSI SUARA INTERAKTIF ---
   const playSound = (isSuccess) => {
     try {
       const AudioContext = window.AudioContext || window.webkitAudioContext;
       const ctx = new AudioContext();
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
-      
+
       if (isSuccess) {
         osc.type = 'sine';
         osc.frequency.setValueAtTime(523.25, ctx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(1046.5, ctx.currentTime + 0.1); 
+        osc.frequency.exponentialRampToValueAtTime(1046.5, ctx.currentTime + 0.1);
         gain.gain.setValueAtTime(0.3, ctx.currentTime);
         gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
       } else {
         osc.type = 'triangle';
-        osc.frequency.setValueAtTime(250, ctx.currentTime); 
-        osc.frequency.exponentialRampToValueAtTime(150, ctx.currentTime + 0.2); 
+        osc.frequency.setValueAtTime(250, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(150, ctx.currentTime + 0.2);
         gain.gain.setValueAtTime(0.3, ctx.currentTime);
         gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
       }
@@ -37,25 +38,24 @@ export default function CekAntrean() {
       gain.connect(ctx.destination);
       osc.start();
       osc.stop(ctx.currentTime + 0.5);
-    } catch (err) {
-      console.log('Audio error:', err);
+    } catch {
+      // Audio playback blocked or unavailable
     }
   };
 
-  // Efek simulasi antrean berjalan (naik 1 nomor setiap 6 detik)
   useEffect(() => {
     let interval;
     if (status === 'tracking' && nomorSekarang < nomorAnda) {
       interval = setInterval(() => {
-        setNomorSekarang(prev => prev + 1);
-      }, 6000); 
+        setNomorSekarang((prev) => prev + 1);
+      }, 6000);
     }
     return () => clearInterval(interval);
   }, [status, nomorSekarang, nomorAnda]);
 
-  const handleCek = (e) => {
-    e.preventDefault();
-    if (!kode.trim()) return;
+  const lacakKodeBooking = (kodeInput) => {
+    const cleanKode = (kodeInput || '').trim().toUpperCase();
+    if (!cleanKode) return;
 
     setStatus('loading');
     setErrorMsg('');
@@ -65,22 +65,21 @@ export default function CekAntrean() {
         const allBookings = JSON.parse(localStorage.getItem('sehathub_all_bookings')) || [];
         const lastBooking = JSON.parse(localStorage.getItem('sehathub_last_booking'));
 
-        // Cari di daftar semua antrean admin terlebih dahulu, lalu fallback ke last_booking
-        let foundBooking = allBookings.find(b => b.kode.toUpperCase() === kode.trim().toUpperCase());
-        if (!foundBooking && lastBooking && lastBooking.kode.toUpperCase() === kode.trim().toUpperCase()) {
+        let foundBooking = allBookings.find((b) => b.kode.toUpperCase() === cleanKode);
+        if (!foundBooking && lastBooking && lastBooking.kode.toUpperCase() === cleanKode) {
           foundBooking = lastBooking;
         }
 
         if (foundBooking) {
-          const userNum = parseInt(foundBooking.nomor.replace(/\D/g, '')) || 15;
+          const userNum = parseInt(foundBooking.nomor.replace(/\D/g, ''), 10) || 15;
           const currentVerif = foundBooking.status || 'Menunggu';
 
           setNomorAnda(userNum);
           setStatusVerifikasi(currentVerif);
           setJadwalWaktu(foundBooking.waktu || '-');
           setFaskesNama(foundBooking.faskesNama);
+          setPoliLayanan(foundBooking.poli || 'Poli Umum');
 
-          // Jika sudah diselesaikan oleh Admin, langsung set antrean selesai
           if (currentVerif === 'Selesai') {
             setNomorSekarang(userNum);
           } else {
@@ -94,12 +93,17 @@ export default function CekAntrean() {
           playSound(false);
           setStatus('error');
         }
-      } catch (err) {
+      } catch {
         setErrorMsg('Terjadi kesalahan pada sistem.');
         playSound(false);
         setStatus('error');
       }
-    }, 1000);
+    }, 500);
+  };
+
+  const handleCek = (e) => {
+    e.preventDefault();
+    lacakKodeBooking(kode);
   };
 
   const isiKodeTerakhir = () => {
@@ -107,46 +111,63 @@ export default function CekAntrean() {
       const saved = JSON.parse(localStorage.getItem('sehathub_last_booking'));
       if (saved && saved.kode) {
         setKode(saved.kode);
+        lacakKodeBooking(saved.kode);
+        return;
       }
-    } catch (e) {}
+      const all = JSON.parse(localStorage.getItem('sehathub_all_bookings')) || [];
+      if (all.length > 0) {
+        const latest = all[all.length - 1];
+        setKode(latest.kode);
+        lacakKodeBooking(latest.kode);
+      } else {
+        setErrorMsg('Belum ada E-Ticket antrean tersimpan di perangkat Anda. Silakan ambil antrean pada kartu Faskes terlebih dahulu.');
+        setStatus('error');
+      }
+    } catch {
+      // Ignore storage read error
+    }
   };
 
-  const sisaAntrean = nomorAnda - nomorSekarang;
-  const estimasiWaktu = sisaAntrean * 5; 
-  const progressPersen = nomorAnda > 0 ? ((nomorSekarang / nomorAnda) * 100).toFixed(0) : 0;
+  const { sisaAntrean, estimasiWaktu, progressPersen } = formatQueueMetrics(nomorSekarang, nomorAnda);
 
   return (
     <section id="cek-antrean" className="py-20 bg-white relative overflow-hidden">
       <div id="antrean" className="absolute top-0"></div>
-      
-      <div className="absolute top-0 right-0 w-64 h-64 bg-orange-50 rounded-full blur-3xl opacity-50 -translate-y-1/2 translate-x-1/4 pointer-events-none"></div>
-      
+
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="text-center mb-10">
-          <h2 className="text-3xl font-extrabold text-slate-900 mb-4">Lacak Antrean <span className="text-orange-500">Real-Time</span></h2>
-          <p className="text-slate-500 text-sm max-w-xl mx-auto">Pantau pergerakan nomor antrean dan status verifikasi admin faskes dari mana saja.</p>
+          <h2 className="text-3xl font-extrabold text-slate-900 mb-3">
+            Lacak Antrean <span className="text-orange-500">Real-Time</span>
+          </h2>
+          <p className="text-slate-500 text-sm max-w-xl mx-auto">
+            Pantau pergerakan nomor loket dan status verifikasi admin fasilitas kesehatan langsung dari rumah.
+          </p>
         </div>
 
-        <div className="bg-slate-50 rounded-3xl p-6 md:p-10 shadow-xl border border-slate-100">
-          
+        <div className="bg-slate-50 rounded-3xl p-6 md:p-10 shadow-sm border border-slate-200/80">
           {/* Form Pencarian */}
           <form onSubmit={handleCek} className="max-w-lg mx-auto flex gap-3 mb-3">
             <div className="relative flex-1">
               <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                 <i className="fa-solid fa-ticket text-slate-400"></i>
               </div>
-              <input 
-                type="text" 
+              <input
+                type="text"
+                aria-label="Kode Booking Antrean"
                 value={kode}
                 onChange={(e) => setKode(e.target.value.toUpperCase())}
-                placeholder="Masukkan Kode Booking (Contoh: SH-9X7P)" 
-                required 
+                placeholder="Masukkan Kode Booking (Contoh: SH-8K2M)"
+                required
                 maxLength="10"
-                className="w-full pl-11 pr-4 py-4 border border-slate-200 bg-white rounded-xl text-sm font-semibold outline-none focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 transition-all uppercase tracking-wider" 
+                className="w-full pl-11 pr-4 py-3.5 border border-slate-200 bg-white rounded-xl text-sm font-mono font-semibold outline-none focus:border-orange-500 transition-all uppercase tracking-wider"
               />
             </div>
-            <button type="submit" disabled={status === 'loading' || !kode.trim()} className="bg-slate-800 hover:bg-slate-900 disabled:bg-slate-300 text-white px-8 py-4 rounded-xl font-bold text-sm transition-all shadow-lg hover:shadow-xl flex items-center justify-center min-w-[120px]">
-              {status === 'loading' ? <i className="fa-solid fa-circle-notch fa-spin text-xl"></i> : 'Lacak'}
+            <button
+              type="submit"
+              disabled={status === 'loading' || !kode.trim()}
+              className="bg-slate-900 hover:bg-slate-800 disabled:bg-slate-300 text-white px-7 py-3.5 rounded-xl font-bold text-sm transition-all shadow-sm flex items-center justify-center min-w-[110px] cursor-pointer"
+            >
+              {status === 'loading' ? <i className="fa-solid fa-circle-notch fa-spin text-lg"></i> : 'Lacak'}
             </button>
           </form>
 
@@ -155,56 +176,61 @@ export default function CekAntrean() {
             <button
               type="button"
               onClick={isiKodeTerakhir}
-              className="text-xs font-bold text-orange-600 hover:text-orange-700 hover:underline flex items-center gap-1"
+              className="text-xs font-bold text-orange-600 hover:text-orange-700 hover:underline flex items-center gap-1.5 cursor-pointer"
             >
-              <i className="fa-solid fa-wand-magic-sparkles"></i> Gunakan Kode Booking Terakhir Saya
+              <i className="fa-solid fa-bolt"></i> Gunakan &amp; Lacak Kode Booking Terakhir Saya
             </button>
           </div>
 
           {/* Notifikasi Error */}
           {status === 'error' && (
-            <div className="max-w-lg mx-auto mb-6 bg-red-50 border border-red-100 text-red-600 p-4 rounded-2xl flex items-start gap-3 animate-[fadeIn_0.3s_ease-out]">
+            <div className="max-w-lg mx-auto mb-6 bg-rose-50 border border-rose-200 text-rose-700 p-4 rounded-2xl flex items-start gap-3">
               <i className="fa-solid fa-circle-exclamation mt-0.5"></i>
               <div>
-                <h5 className="font-bold text-sm">Pencarian Gagal</h5>
-                <p className="text-xs mt-1 opacity-90">{errorMsg}</p>
+                <h5 className="font-bold text-sm">Pencarian Tidak Ditemukan</h5>
+                <p className="text-xs mt-1">{errorMsg}</p>
               </div>
             </div>
           )}
 
           {/* Area Hasil Tracking */}
           {status === 'tracking' && (
-            <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm animate-[fadeIn_0.4s_ease-out]">
-              
+            <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 pb-6 border-b border-slate-100">
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-full bg-orange-100 flex items-center justify-center">
+                <div className="flex items-center gap-3.5">
+                  <div className="w-12 h-12 rounded-2xl bg-orange-50 border border-orange-200 flex items-center justify-center shrink-0">
                     <i className="fa-solid fa-hospital-user text-orange-500 text-xl"></i>
                   </div>
                   <div>
-                    <p className="text-xs text-slate-500 font-bold uppercase tracking-wider mb-0.5">Kode Booking: <span className="text-orange-600 font-mono">{kode}</span></p>
-                    <p className="text-base font-extrabold text-slate-800">{faskesNama}</p>
-                    <p className="text-[11px] text-slate-400 font-medium mt-0.5"><i className="fa-regular fa-calendar text-orange-400 mr-1"></i> Jadwal: {jadwalWaktu}</p>
+                    <p className="text-xs text-slate-500 font-bold">
+                      Kode Booking: <span className="text-orange-600 font-mono tabular-nums">{kode}</span> · {poliLayanan}
+                    </p>
+                    <p className="text-base font-extrabold text-slate-900">{faskesNama}</p>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      Jadwal Kunjungan: {jadwalWaktu}
+                    </p>
                   </div>
                 </div>
-                <div className="flex flex-wrap items-center gap-2 sm:justify-end">
-                  {/* Badge Status Verifikasi Admin */}
-                  <span className={`inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-full border ${
-                    statusVerifikasi === 'Disetujui'
-                      ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                      : statusVerifikasi === 'Selesai'
-                      ? 'bg-blue-50 text-blue-700 border-blue-200'
-                      : 'bg-amber-50 text-amber-700 border-amber-200'
-                  }`}>
-                    <i className={`fa-solid ${
-                      statusVerifikasi === 'Disetujui' ? 'fa-circle-check' : statusVerifikasi === 'Selesai' ? 'fa-flag-checkered' : 'fa-clock'
-                    }`}></i>
+                <div className="text-left sm:text-right">
+                  <span
+                    className={`text-xs font-bold ${
+                      statusVerifikasi === 'Disetujui'
+                        ? 'text-emerald-600'
+                        : statusVerifikasi === 'Selesai'
+                        ? 'text-blue-600'
+                        : 'text-amber-600'
+                    }`}
+                  >
+                    <i
+                      className={`fa-solid mr-1.5 ${
+                        statusVerifikasi === 'Disetujui'
+                          ? 'fa-circle-check'
+                          : statusVerifikasi === 'Selesai'
+                          ? 'fa-flag-checkered'
+                          : 'fa-clock'
+                      }`}
+                    ></i>
                     Status Admin: {statusVerifikasi}
-                  </span>
-
-                  <span className="inline-flex items-center gap-1.5 bg-slate-100 text-slate-700 text-xs font-bold px-3 py-1.5 rounded-full">
-                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                    Live Tracking
                   </span>
                 </div>
               </div>
@@ -212,25 +238,28 @@ export default function CekAntrean() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center mb-8">
                 {/* Nomor Berjalan */}
                 <div className="text-center md:text-left">
-                  <p className="text-sm font-bold text-slate-500 mb-2">Sedang Dilayani di Loket</p>
-                  <div className="text-5xl font-extrabold text-slate-900 mb-2">
+                  <p className="text-xs font-bold text-slate-500 mb-1">Sedang Dilayani di Loket</p>
+                  <div className="text-5xl font-extrabold font-mono tabular-nums text-slate-900 mb-1">
                     A-{nomorSekarang.toString().padStart(2, '0')}
                   </div>
-                  <p className="text-xs text-slate-400">Diperbarui secara otomatis</p>
+                  <p className="text-xs text-slate-400">Diperbarui otomatis secara berkala</p>
                 </div>
 
                 {/* Kartu Antrean Anda */}
-                <div className="bg-gradient-to-br from-orange-500 to-amber-500 rounded-2xl p-6 text-white shadow-lg shadow-orange-500/30 relative overflow-hidden">
-                  <i className="fa-solid fa-ticket absolute -right-4 -bottom-4 text-8xl opacity-20 transform -rotate-12"></i>
-                  <p className="text-orange-100 text-sm font-semibold mb-1">Nomor Antrean Anda</p>
-                  <div className="text-4xl font-extrabold mb-4">A-{nomorAnda.toString().padStart(2, '0')}</div>
-                  <div className="flex items-center justify-between text-sm font-medium bg-white/20 p-3 rounded-xl backdrop-blur-sm">
+                <div className="bg-gradient-to-br from-orange-500 to-amber-500 rounded-2xl p-6 text-white shadow-md relative overflow-hidden">
+                  <p className="text-orange-100 text-xs font-bold mb-1">Nomor Antrean Anda</p>
+                  <div className="text-4xl font-extrabold font-mono tabular-nums mb-4">
+                    A-{nomorAnda.toString().padStart(2, '0')}
+                  </div>
+                  <div className="flex items-center justify-between text-xs font-semibold bg-white/20 p-3 rounded-xl backdrop-blur-sm font-mono tabular-nums">
                     {sisaAntrean <= 0 ? (
-                      <span className="flex items-center gap-2 font-bold"><i className="fa-solid fa-bell animate-bounce"></i> Giliran Anda Sekarang / Selesai!</span>
+                      <span className="flex items-center gap-2 font-bold">
+                        <i className="fa-solid fa-bell"></i> Giliran Anda Sekarang / Selesai!
+                      </span>
                     ) : (
                       <>
-                        <span className="flex items-center gap-2"><i className="fa-solid fa-users"></i> Sisa {sisaAntrean} orang</span>
-                        <span className="flex items-center gap-2"><i className="fa-regular fa-clock"></i> ~{estimasiWaktu} mnt</span>
+                        <span>Sisa {sisaAntrean} antrean</span>
+                        <span>Estimasi ~{estimasiWaktu} menit</span>
                       </>
                     )}
                   </div>
@@ -239,23 +268,19 @@ export default function CekAntrean() {
 
               {/* Progress Bar */}
               <div>
-                <div className="flex justify-between text-xs font-bold text-slate-500 mb-2">
-                  <span>Progress Antrean</span>
-                  <span>{progressPersen > 100 ? 100 : progressPersen}%</span>
+                <div className="flex justify-between text-xs font-bold text-slate-600 mb-2 font-mono tabular-nums">
+                  <span>Progres Antrean Loket</span>
+                  <span>{progressPersen}%</span>
                 </div>
                 <div className="w-full bg-slate-100 rounded-full h-3 overflow-hidden">
-                  <div 
-                    className="bg-orange-500 h-3 rounded-full transition-all duration-1000 ease-out relative" 
-                    style={{ width: `${progressPersen > 100 ? 100 : progressPersen}%` }}
-                  >
-                    <div className="absolute inset-0 bg-white/20 w-full h-full animate-[shimmer_2s_infinite]"></div>
-                  </div>
+                  <div
+                    className="bg-orange-500 h-3 rounded-full transition-all duration-700 ease-out"
+                    style={{ width: `${progressPersen}%` }}
+                  ></div>
                 </div>
               </div>
-
             </div>
           )}
-
         </div>
       </div>
     </section>
